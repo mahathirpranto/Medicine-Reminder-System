@@ -1,0 +1,146 @@
+{
+  "info": {
+    "_postman_id": "b7890a12-89cd-4ef0-9123-medreminder01",
+    "name": "Medicine Reminder System API",
+    "description": "Collection of all 5 CRUD operations for the Medicine Reminder System (CSE309 Mid Project Assessment: MVP)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        },
+        "description": "Verify that the FastAPI backend server is alive and operational."
+      },
+      "response": []
+    },
+    {
+      "name": "1. CREATE: Add Medicine",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"medicine_name\": \"Amoxicillin\",\n  \"dosage\": \"500 mg\",\n  \"frequency\": \"Three times daily\",\n  \"reminder_time\": \"08:00 AM, 02:00 PM, 08:00 PM\",\n  \"start_date\": \"2026-11-04\",\n  \"end_date\": \"2026-11-11\",\n  \"status\": true\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/medicines",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "medicines"
+          ]
+        },
+        "description": "1. CREATE Operation: Add a new medicine schedule into the database."
+      },
+      "response": []
+    },
+    {
+      "name": "2. READ LIST: Get All Medicines",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/medicines",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "medicines"
+          ]
+        },
+        "description": "2. READ LIST Operation: Retrieve all medicine records from the database."
+      },
+      "response": []
+    },
+    {
+      "name": "3. READ SINGLE: Get Medicine by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/medicines/1",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "medicines",
+            "1"
+          ]
+        },
+        "description": "3. READ SINGLE Operation: Retrieve details of a specific medicine by ID."
+      },
+      "response": []
+    },
+    {
+      "name": "4. UPDATE: Edit Medicine by ID",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"dosage\": \"650 mg\",\n  \"frequency\": \"Twice daily\",\n  \"reminder_time\": \"09:00 AM, 09:00 PM\",\n  \"status\": true\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/medicines/1",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "medicines",
+            "1"
+          ]
+        },
+        "description": "4. UPDATE Operation: Modify fields of an existing medicine record."
+      },
+      "response": []
+    },
+    {
+      "name": "5. DELETE: Remove Medicine by ID",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/medicines/1",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "medicines",
+            "1"
+          ]
+        },
+        "description": "5. DELETE Operation: Permanently delete a medicine record by ID."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ]
+}
