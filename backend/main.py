@@ -5,6 +5,7 @@ from typing import List, Optional
 
 from fastapi import FastAPI, Depends, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
@@ -29,11 +30,19 @@ app = FastAPI(
     title="Medicine Reminder System API",
     description="REST API for CSE309 Mid Project MVP - Medicine Reminder System",
     version="1.0.0",
+    docs_url="/api/docs",
+    openapi_url="/api/openapi.json",
     lifespan=lifespan,
 )
 
 # Initialize database tables immediately on app load
 init_db()
+
+# Support both /docs and /api/docs
+@app.get("/docs", include_in_schema=False)
+def swagger_docs():
+    return get_swagger_ui_html(openapi_url="/api/openapi.json", title="Medicine Reminder System API - Docs")
+
 
 # Enable CORS for frontend development and external API testing
 app.add_middleware(
