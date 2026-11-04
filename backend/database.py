@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -6,14 +8,36 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Read DATABASE_URL or fall back to local SQLite database
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./medicines.db")
+# Query parameters that Supabase and Vercel add but libpq/psycopg rejects
+_UNSUPPORTED_QUERY_KEYS = {"supa", "pgbouncer"}
 
-# Handle Supabase / Heroku postgres URL format compatibility
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# SQLite requires specific connect args for multi-threaded FastAPI access
+def _normalize_database_url(url: str) -> str:
+    """Normalize postgres URL and strip unsupported query parameters."""
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    
+    if url.startswith(("postgresql://", "postgresql+psycopg://", "postgresql+psycopg2://")):
+        parts = urlsplit(url)
+        query = [(k, v) for k, v in parse_qsl(parts.query) if k not in _UNSUPPORTED_QUERY_KEYS]
+        return urlunsplit(parts._replace(query=urlencode(query)))
+    return url
+
+
+# Resolve DATABASE_URL from environment or fall back to SQLite
+raw_db_url = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL")
+
+if raw_db_url:
+    DATABASE_URL = _normalize_database_url(raw_db_url)
+else:
+    # On Vercel, the filesystem is read-only except /tmp
+    if os.getenv("VERCEL"):
+        db_path = Path("/tmp") / "medicines.db"
+    else:
+        db_path = Path(__file__).resolve().parent / "medicines.db"
+    DATABASE_URL = f"sqlite:///{db_path.as_posix()}"
+
+# Engine creation
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 else:
