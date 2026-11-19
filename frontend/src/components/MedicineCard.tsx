@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pill, Clock, Calendar, CheckCircle2, XCircle, Edit3, Trash2, Eye } from 'lucide-react';
-import type { Medicine } from '../services/medicineApi';
+import type { Medicine } from '../types/medicine';
 
 interface MedicineCardProps {
   medicine: Medicine;

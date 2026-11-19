@@ -1,7 +1,7 @@
 import React from 'react';
 import { Search, Plus, Filter, Pill, RefreshCw } from 'lucide-react';
 import { MedicineCard } from './MedicineCard';
-import type { Medicine } from '../services/medicineApi';
+import type { Medicine } from '../types/medicine';
 
 interface MedicineListProps {
   medicines: Medicine[];

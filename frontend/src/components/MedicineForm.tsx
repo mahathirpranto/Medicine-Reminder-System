@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Save, AlertCircle } from 'lucide-react';
-import type { Medicine, MedicineCreateInput } from '../services/medicineApi';
+import type { Medicine, MedicineCreateInput } from '../types/medicine';
 
 interface MedicineFormProps {
   initialData?: Medicine | null;
