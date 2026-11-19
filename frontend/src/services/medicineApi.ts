@@ -3,19 +3,9 @@
  * Handles all 5 CRUD operations communicating with the FastAPI backend.
  */
 
-export interface Medicine {
-  id: number;
-  medicine_name: string;
-  dosage: string;
-  frequency: string;
-  reminder_time: string;
-  start_date: string;
-  end_date: string;
-  status: boolean;
-}
+import type { Medicine, MedicineCreateInput, MedicineUpdateInput } from '../types/medicine';
 
-export type MedicineCreateInput = Omit<Medicine, 'id'>;
-export type MedicineUpdateInput = Partial<MedicineCreateInput>;
+export type { Medicine, MedicineCreateInput, MedicineUpdateInput };
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 

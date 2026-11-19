@@ -17,9 +17,8 @@ import {
   createMedicine,
   updateMedicine,
   deleteMedicine,
-  type Medicine,
-  type MedicineCreateInput,
 } from '../services/medicineApi';
+import type { Medicine, MedicineCreateInput } from '../types/medicine';
 import { MedicineList } from '../components/MedicineList';
 import { MedicineForm } from '../components/MedicineForm';
 
