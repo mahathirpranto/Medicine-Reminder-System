@@ -1,6 +1,62 @@
+from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, EmailStr
 
+
+# ==========================================
+# Auth & User Schemas
+# ==========================================
+
+class UserSignup(BaseModel):
+    """Payload for user registration."""
+    email: EmailStr = Field(..., description="User's valid email address")
+    password: str = Field(..., min_length=6, description="Password (at least 6 characters)")
+    full_name: str = Field(..., min_length=1, description="User's display or full name")
+
+
+class UserLogin(BaseModel):
+    """Payload for user authentication."""
+    email: EmailStr = Field(..., description="User's email address")
+    password: str = Field(..., min_length=1, description="User's password")
+
+
+class UserResponse(BaseModel):
+    """Public profile of an authenticated user."""
+    id: int
+    email: str
+    full_name: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TokenResponse(BaseModel):
+    """Returned on successful login or registration."""
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+
+
+class RefreshRequest(BaseModel):
+    """Payload to request a new access token using a refresh token."""
+    refresh_token: str = Field(..., min_length=1, description="The opaque refresh token string")
+
+
+class RefreshTokenResponse(BaseModel):
+    """Returned when an access token is renewed."""
+    access_token: str
+    token_type: str = "bearer"
+
+
+class MessageResponse(BaseModel):
+    """Generic status/message response."""
+    message: str
+
+
+# ==========================================
+# Medicine Schemas
+# ==========================================
 
 class MedicineBase(BaseModel):
     """Base schema with common medicine attributes."""
@@ -32,5 +88,6 @@ class MedicineUpdate(BaseModel):
 class MedicineResponse(MedicineBase):
     """Schema for returning medicine data."""
     id: int
+    user_id: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)

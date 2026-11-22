@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
@@ -65,6 +65,14 @@ def init_db():
         from . import models
 
     Base.metadata.create_all(bind=engine)
+
+    # Safe migration: ensure user_id column exists on medicines table if upgrading from older schema
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE medicines ADD COLUMN user_id INTEGER REFERENCES users(id)"))
+            conn.commit()
+    except Exception:
+        pass  # Column already exists
 
     # Seed initial medicines if table is empty
     db = SessionLocal()
