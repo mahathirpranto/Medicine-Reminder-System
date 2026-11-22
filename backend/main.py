@@ -8,10 +8,12 @@ from fastapi.staticfiles import StaticFiles
 
 try:
     from database import init_db
-    from routers.medicines import router as medicines_router
+    from routers.medicines import medicines_router
+    from routers.auth import auth_router, users_router
 except ImportError:
     from .database import init_db
-    from .routers.medicines import router as medicines_router
+    from .routers.medicines import medicines_router
+    from .routers.auth import auth_router, users_router
 
 
 @asynccontextmanager
@@ -23,8 +25,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Medicine Reminder System API",
-    description="REST API for CSE309 Mid Project MVP - Medicine Reminder System",
-    version="1.0.0",
+    description="REST API with JWT Authentication, Refresh Token Sessions, and Medicine Reminder Management",
+    version="2.0.0",
     docs_url="/api/docs",
     openapi_url="/api/openapi.json",
     lifespan=lifespan,
@@ -41,6 +43,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register Authentication Routers (mounted at both /auth and /api/auth)
+app.include_router(auth_router, prefix="/api/auth")
+app.include_router(auth_router, prefix="/auth")
+
+# Register Users Router (mounted at /api/users and /users)
+app.include_router(users_router, prefix="/api/users")
+app.include_router(users_router, prefix="/users")
 
 # Register Medicine CRUD Router (mounted at both /medicines and /api/medicines)
 app.include_router(medicines_router)
@@ -60,7 +70,7 @@ def health_check():
     return {
         "status": "ok",
         "app": "Medicine Reminder System",
-        "version": "1.0.0"
+        "version": "2.0.0"
     }
 
 

@@ -1,1 +1,1 @@
-export * from './types/medicine';
+export * from './types/index';

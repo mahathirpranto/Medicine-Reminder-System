@@ -1,9 +1,11 @@
 /**
  * Medicine Reminder System - API Service
- * Handles all 5 CRUD operations communicating with the FastAPI backend.
+ * Handles all 5 CRUD operations communicating with the FastAPI backend,
+ * automatically authenticated via Bearer JWT with silent refresh retry.
  */
 
 import type { Medicine, MedicineCreateInput, MedicineUpdateInput } from '../types/medicine';
+import { authenticatedFetch } from './authApi';
 
 export type { Medicine, MedicineCreateInput, MedicineUpdateInput };
 
@@ -14,7 +16,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
  * POST /api/medicines
  */
 export async function createMedicine(data: MedicineCreateInput): Promise<Medicine> {
-  const response = await fetch(`${BASE_URL}/medicines`, {
+  const response = await authenticatedFetch(`${BASE_URL}/medicines`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -45,7 +47,7 @@ export async function getMedicines(params?: { search?: string; status?: boolean 
   }
 
   const url = query.toString() ? `${BASE_URL}/medicines?${query}` : `${BASE_URL}/medicines`;
-  const response = await fetch(url, {
+  const response = await authenticatedFetch(url, {
     method: 'GET',
     headers: {
       Accept: 'application/json',
@@ -53,7 +55,8 @@ export async function getMedicines(params?: { search?: string; status?: boolean 
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch medicines (${response.status})`);
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to fetch medicines (${response.status})`);
   }
 
   return response.json();
@@ -64,7 +67,7 @@ export async function getMedicines(params?: { search?: string; status?: boolean 
  * GET /api/medicines/{id}
  */
 export async function getMedicineById(id: number): Promise<Medicine> {
-  const response = await fetch(`${BASE_URL}/medicines/${id}`, {
+  const response = await authenticatedFetch(`${BASE_URL}/medicines/${id}`, {
     method: 'GET',
     headers: {
       Accept: 'application/json',
@@ -84,7 +87,7 @@ export async function getMedicineById(id: number): Promise<Medicine> {
  * PUT /api/medicines/{id}
  */
 export async function updateMedicine(id: number, data: MedicineUpdateInput): Promise<Medicine> {
-  const response = await fetch(`${BASE_URL}/medicines/${id}`, {
+  const response = await authenticatedFetch(`${BASE_URL}/medicines/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -106,7 +109,7 @@ export async function updateMedicine(id: number, data: MedicineUpdateInput): Pro
  * DELETE /api/medicines/{id}
  */
 export async function deleteMedicine(id: number): Promise<{ message: string; id: number }> {
-  const response = await fetch(`${BASE_URL}/medicines/${id}`, {
+  const response = await authenticatedFetch(`${BASE_URL}/medicines/${id}`, {
     method: 'DELETE',
     headers: {
       Accept: 'application/json',

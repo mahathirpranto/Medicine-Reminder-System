@@ -10,6 +10,8 @@ import {
   X,
   Trash2,
   Check,
+  User as UserIcon,
+  LogOut,
 } from 'lucide-react';
 import {
   getMedicines,
@@ -21,6 +23,7 @@ import {
 import type { Medicine, MedicineCreateInput } from '../types/medicine';
 import { MedicineList } from '../components/MedicineList';
 import { MedicineForm } from '../components/MedicineForm';
+import { useAuth } from '../context/AuthContext';
 
 interface ToastMessage {
   id: number;
@@ -29,6 +32,7 @@ interface ToastMessage {
 }
 
 export const Dashboard: React.FC = () => {
+  const { user, logout } = useAuth();
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -72,7 +76,7 @@ export const Dashboard: React.FC = () => {
 
   useEffect(() => {
     fetchMedicines();
-  }, [fetchMedicines]);
+  }, [fetchMedicines, user]);
 
   // 2. Fetch single medicine (CRUD: Read Single)
   const handleView = async (id: number) => {
@@ -100,11 +104,13 @@ export const Dashboard: React.FC = () => {
       // CREATE operation
       const created = await createMedicine(formData);
       setMedicines((prev) => [created, ...prev]);
-      addToast('success', `"${created.medicine_name}" added to your schedule!`);
+      addToast('success', `"${created.medicine_name}" created successfully!`);
     }
+    setIsFormOpen(false);
+    setEditingMedicine(null);
   };
 
-  // 4. Quick toggle status (CRUD: Update)
+  // 4. Toggle Status (CRUD: Update)
   const handleToggleStatus = async (medicine: Medicine) => {
     try {
       const updated = await updateMedicine(medicine.id, {
@@ -148,6 +154,10 @@ export const Dashboard: React.FC = () => {
     setIsFormOpen(true);
   };
 
+  const handleLogout = async () => {
+    await logout();
+  };
+
   // Calculate statistics
   const totalCount = medicines.length;
   const activeCount = medicines.filter((m) => m.status).length;
@@ -182,7 +192,27 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="header-actions">
+          <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {user && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  background: '#f1f5f9',
+                  padding: '0.45rem 0.85rem',
+                  borderRadius: '20px',
+                  fontSize: '0.85rem',
+                  color: '#334155',
+                  fontWeight: 600,
+                  border: '1px solid #e2e8f0',
+                }}
+              >
+                <UserIcon size={16} color="#059669" />
+                <span>{user.full_name || user.email}</span>
+              </div>
+            )}
+
             <button
               type="button"
               className="btn-primary"
@@ -190,6 +220,29 @@ export const Dashboard: React.FC = () => {
             >
               <Plus size={18} />
               <span>Add Medicine</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              title="Logout from Medicine Reminder System"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.55rem 0.9rem',
+                background: '#ffffff',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                color: '#475569',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <LogOut size={16} />
+              <span>Logout</span>
             </button>
           </div>
         </div>
@@ -219,47 +272,35 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="stat-card stat-today">
-            <div className="stat-icon-wrapper">
-              <Clock size={24} />
-            </div>
-            <div className="stat-info">
-              <span className="stat-value">
-                {activeCount > 0 ? activeCount : 0}
-              </span>
-              <span className="stat-label">Today's Active Doses</span>
-            </div>
-          </div>
-
           <div className="stat-card stat-inactive">
             <div className="stat-icon-wrapper">
               <CheckCircle size={24} />
             </div>
             <div className="stat-info">
               <span className="stat-value">{inactiveCount}</span>
-              <span className="stat-label">Completed / Inactive</span>
+              <span className="stat-label">Inactive / Completed</span>
             </div>
           </div>
         </div>
 
-        {/* Medicine List Section */}
+        {/* Medicines List Section */}
         <MedicineList
           medicines={medicines}
           loading={loading}
           searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
           statusFilter={statusFilter}
+          onSearchChange={setSearchTerm}
           onStatusFilterChange={setStatusFilter}
           onView={handleView}
           onEdit={handleOpenEdit}
-          onDelete={setDeletingMedicine}
+          onDelete={(med) => setDeletingMedicine(med)}
           onToggleStatus={handleToggleStatus}
-          onAddNew={handleOpenAdd}
           onRefresh={fetchMedicines}
+          onAddNew={handleOpenAdd}
         />
       </main>
 
-      {/* Form Modal: Add / Edit (CRUD: Create / Update) */}
+      {/* Form Modal (CRUD: Create and Update) */}
       <MedicineForm
         isOpen={isFormOpen}
         initialData={editingMedicine}
@@ -275,11 +316,9 @@ export const Dashboard: React.FC = () => {
         <div className="modal-overlay" onClick={() => setViewingMedicine(null)}>
           <div className="modal-container detail-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <div className="modal-title-with-badge">
-                <h2>Medicine Details</h2>
-                <span className={`status-pill ${viewingMedicine.status ? 'pill-active' : 'pill-inactive'}`}>
-                  {viewingMedicine.status ? 'Active Reminder' : 'Inactive'}
-                </span>
+              <div className="detail-modal-title">
+                <Pill size={24} className="detail-pill-icon" />
+                <h2>{viewingMedicine.medicine_name}</h2>
               </div>
               <button
                 type="button"
@@ -290,38 +329,42 @@ export const Dashboard: React.FC = () => {
               </button>
             </div>
 
-            <div className="detail-modal-body">
-              <div className="detail-header-card">
-                <div className="detail-icon-large">
-                  <Pill size={32} />
+            <div className="detail-content">
+              <div className="detail-grid">
+                <div className="detail-item">
+                  <span className="detail-label">Dosage</span>
+                  <span className="detail-value">{viewingMedicine.dosage}</span>
                 </div>
-                <div>
-                  <h3 className="detail-med-name">{viewingMedicine.medicine_name}</h3>
-                  <p className="detail-med-sub">ID: #{viewingMedicine.id} &bull; {viewingMedicine.dosage}</p>
-                </div>
-              </div>
 
-              <div className="detail-table">
-                <div className="detail-row">
-                  <span className="detail-label">Frequency:</span>
-                  <span className="detail-val">{viewingMedicine.frequency}</span>
+                <div className="detail-item">
+                  <span className="detail-label">Frequency</span>
+                  <span className="detail-value">{viewingMedicine.frequency}</span>
                 </div>
-                <div className="detail-row">
-                  <span className="detail-label">Reminder Time:</span>
-                  <span className="detail-val font-mono">{viewingMedicine.reminder_time}</span>
+
+                <div className="detail-item">
+                  <span className="detail-label">
+                    <Clock size={16} /> Reminder Time
+                  </span>
+                  <span className="detail-value">{viewingMedicine.reminder_time}</span>
                 </div>
-                <div className="detail-row">
-                  <span className="detail-label">Start Date:</span>
-                  <span className="detail-val">{viewingMedicine.start_date}</span>
+
+                <div className="detail-item">
+                  <span className="detail-label">Status</span>
+                  <span
+                    className={`status-badge ${
+                      viewingMedicine.status ? 'status-active' : 'status-inactive'
+                    }`}
+                  >
+                    {viewingMedicine.status ? 'Active' : 'Inactive'}
+                  </span>
                 </div>
-                <div className="detail-row">
-                  <span className="detail-label">End Date:</span>
-                  <span className="detail-val">{viewingMedicine.end_date}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Status:</span>
-                  <span className="detail-val">
-                    {viewingMedicine.status ? 'Active (Scheduled)' : 'Inactive (Paused)'}
+
+                <div className="detail-item full-width">
+                  <span className="detail-label">
+                    <Calendar size={16} /> Treatment Schedule
+                  </span>
+                  <span className="detail-value">
+                    {viewingMedicine.start_date} to {viewingMedicine.end_date}
                   </span>
                 </div>
               </div>
@@ -344,7 +387,7 @@ export const Dashboard: React.FC = () => {
                   handleOpenEdit(toEdit);
                 }}
               >
-                Edit This Medicine
+                Edit Medicine
               </button>
             </div>
           </div>
