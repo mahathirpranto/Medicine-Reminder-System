@@ -9,6 +9,8 @@ import type {
   RefreshTokenResponse,
   LoginCredentials,
   SignupCredentials,
+  AdminStats,
+  AdminUserSummary,
 } from '../types/auth';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
@@ -187,4 +189,64 @@ export async function authenticatedFetch(url: string, options: RequestInit = {})
   }
 
   return response;
+}
+
+/**
+ * 6. RBAC: GET ADMIN STATS (Admin Only)
+ * GET /api/admin/stats
+ */
+export async function getAdminStats(): Promise<AdminStats> {
+  const response = await authenticatedFetch(`${BASE_URL}/admin/stats`);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || 'Failed to fetch admin system statistics');
+  }
+  return response.json();
+}
+
+/**
+ * 7. RBAC: GET ALL USERS (Admin Only)
+ * GET /api/admin/users
+ */
+export async function getAdminUsers(): Promise<AdminUserSummary[]> {
+  const response = await authenticatedFetch(`${BASE_URL}/admin/users`);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || 'Failed to fetch user list');
+  }
+  return response.json();
+}
+
+/**
+ * 8. RBAC: UPDATE USER ROLE (Admin Only)
+ * PUT /api/admin/users/:userId/role
+ */
+export async function updateUserRole(userId: number, role: 'patient' | 'admin' | 'super_admin'): Promise<{ message: string }> {
+  const response = await authenticatedFetch(`${BASE_URL}/admin/users/${userId}/role`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ role }),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || 'Failed to update user role');
+  }
+  return response.json();
+}
+
+/**
+ * 9. RBAC: DELETE USER ACCOUNT (Main System Administrator Only)
+ * DELETE /api/admin/users/:userId
+ */
+export async function deleteUserAccount(userId: number): Promise<{ message: string }> {
+  const response = await authenticatedFetch(`${BASE_URL}/admin/users/${userId}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || 'Failed to delete user account');
+  }
+  return response.json();
 }

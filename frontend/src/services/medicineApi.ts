@@ -1,13 +1,28 @@
 /**
  * Medicine Reminder System - API Service
  * Handles all 5 CRUD operations communicating with the FastAPI backend,
- * automatically authenticated via Bearer JWT with silent refresh retry.
+ * automatically authenticated via Bearer JWT with silent refresh retry,
+ * plus Dose Tracking and Schedule Endpoints (Part 5).
  */
 
-import type { Medicine, MedicineCreateInput, MedicineUpdateInput } from '../types/medicine';
+import type {
+  Medicine,
+  MedicineCreateInput,
+  MedicineUpdateInput,
+  DoseLog,
+  DoseLogCreateInput,
+  TodayScheduleItem,
+} from '../types/medicine';
 import { authenticatedFetch } from './authApi';
 
-export type { Medicine, MedicineCreateInput, MedicineUpdateInput };
+export type {
+  Medicine,
+  MedicineCreateInput,
+  MedicineUpdateInput,
+  DoseLog,
+  DoseLogCreateInput,
+  TodayScheduleItem,
+};
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
@@ -119,6 +134,95 @@ export async function deleteMedicine(id: number): Promise<{ message: string; id:
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.detail || `Failed to delete medicine with ID ${id} (${response.status})`);
+  }
+
+  return response.json();
+}
+
+// ==========================================
+// Dose Tracking & Schedule API (Part 5)
+// ==========================================
+
+/**
+ * 6. LOG DOSE - Mark medicine dose as taken or skipped
+ * POST /api/medicines/{id}/doses
+ */
+export async function logMedicineDose(
+  medicineId: number,
+  data?: DoseLogCreateInput
+): Promise<DoseLog> {
+  const response = await authenticatedFetch(`${BASE_URL}/medicines/${medicineId}/doses`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(data || { status: 'taken' }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to record dose (${response.status})`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 7. GET TODAY'S SCHEDULE
+ * GET /api/medicines/schedule/today
+ */
+export async function getTodaySchedule(): Promise<TodayScheduleItem[]> {
+  const response = await authenticatedFetch(`${BASE_URL}/medicines/schedule/today`, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to load today's schedule (${response.status})`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 8. GET MEDICINE DOSE HISTORY
+ * GET /api/medicines/{id}/doses
+ */
+export async function getMedicineDoseHistory(medicineId: number): Promise<DoseLog[]> {
+  const response = await authenticatedFetch(`${BASE_URL}/medicines/${medicineId}/doses`, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to fetch dose history (${response.status})`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 9. GET USER GLOBAL DOSE HISTORY
+ * GET /api/medicines/doses/history
+ */
+export async function getUserDoseHistory(limit: number = 30): Promise<DoseLog[]> {
+  const response = await authenticatedFetch(`${BASE_URL}/medicines/doses/history?limit=${limit}`, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to fetch global dose history (${response.status})`);
   }
 
   return response.json();

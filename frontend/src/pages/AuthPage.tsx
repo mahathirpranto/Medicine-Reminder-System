@@ -203,6 +203,74 @@ export const AuthPage: React.FC = () => {
             </div>
           )}
 
+          {mode === 'login' && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem', marginBottom: '1.25rem' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('admin@example.com');
+                  setPassword('AdminPassword123!');
+                }}
+                title="Fill credentials for Main System Administrator"
+                style={{
+                  padding: '0.45rem 0.25rem',
+                  fontSize: '0.725rem',
+                  fontWeight: 600,
+                  background: '#fef3c7',
+                  color: '#92400e',
+                  border: '1px solid #fde68a',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                }}
+              >
+                👑 Main Admin
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('vatista@example.com');
+                  setPassword('VatistaPassword123!');
+                }}
+                title="Fill credentials for Vatista (Secondary Administrator)"
+                style={{
+                  padding: '0.45rem 0.25rem',
+                  fontSize: '0.725rem',
+                  fontWeight: 600,
+                  background: '#ede9fe',
+                  color: '#6d28d9',
+                  border: '1px solid #ddd6fe',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                }}
+              >
+                🛡️ Vatista
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('test_patient_rbac@example.com');
+                  setPassword('PatientPassword123!');
+                }}
+                title="Fill credentials for test Patient account"
+                style={{
+                  padding: '0.45rem 0.25rem',
+                  fontSize: '0.725rem',
+                  fontWeight: 600,
+                  background: '#ecfdf5',
+                  color: '#047857',
+                  border: '1px solid #a7f3d0',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                }}
+              >
+                🧑‍⚕️ Patient
+              </button>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit}>
             {mode === 'register' && (
               <div style={{ marginBottom: '1.1rem' }}>

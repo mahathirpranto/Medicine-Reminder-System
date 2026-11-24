@@ -14,6 +14,8 @@ interface MedicineListProps {
   onEdit: (medicine: Medicine) => void;
   onDelete: (medicine: Medicine) => void;
   onToggleStatus: (medicine: Medicine) => void;
+  onTakeDose?: (medicine: Medicine) => void;
+  onViewHistory?: (medicine: Medicine) => void;
   onAddNew: () => void;
   onRefresh: () => void;
 }
@@ -29,6 +31,8 @@ export const MedicineList: React.FC<MedicineListProps> = ({
   onEdit,
   onDelete,
   onToggleStatus,
+  onTakeDose,
+  onViewHistory,
   onAddNew,
   onRefresh,
 }) => {
@@ -58,7 +62,7 @@ export const MedicineList: React.FC<MedicineListProps> = ({
           {searchTerm && (
             <button
               type="button"
-              className="clear-search-btn"
+              className="clear-search"
               onClick={() => onSearchChange('')}
             >
               &times;
@@ -66,7 +70,7 @@ export const MedicineList: React.FC<MedicineListProps> = ({
           )}
         </div>
 
-        <div className="filter-actions">
+        <div className="filter-controls">
           <div className="filter-tabs">
             <button
               type="button"
@@ -95,8 +99,7 @@ export const MedicineList: React.FC<MedicineListProps> = ({
             type="button"
             className="btn-refresh"
             onClick={onRefresh}
-            title="Refresh list"
-            disabled={loading}
+            title="Refresh medicines"
           >
             <RefreshCw size={16} className={loading ? 'spin' : ''} />
           </button>
@@ -134,6 +137,8 @@ export const MedicineList: React.FC<MedicineListProps> = ({
               onEdit={onEdit}
               onDelete={onDelete}
               onToggleStatus={onToggleStatus}
+              onTakeDose={onTakeDose}
+              onViewHistory={onViewHistory}
             />
           ))}
         </div>

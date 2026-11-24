@@ -10,10 +10,12 @@ try:
     from database import init_db
     from routers.medicines import medicines_router
     from routers.auth import auth_router, users_router
+    from routers.admin import admin_router
 except ImportError:
     from .database import init_db
     from .routers.medicines import medicines_router
     from .routers.auth import auth_router, users_router
+    from .routers.admin import admin_router
 
 
 @asynccontextmanager
@@ -51,6 +53,10 @@ app.include_router(auth_router, prefix="/auth")
 # Register Users Router (mounted at /api/users and /users)
 app.include_router(users_router, prefix="/api/users")
 app.include_router(users_router, prefix="/users")
+
+# Register Admin RBAC Router (mounted at /api/admin and /admin)
+app.include_router(admin_router, prefix="/api/admin")
+app.include_router(admin_router, prefix="/admin")
 
 # Register Medicine CRUD Router (mounted at both /medicines and /api/medicines)
 app.include_router(medicines_router)

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pill, Clock, Calendar, CheckCircle2, XCircle, Edit3, Trash2, Eye } from 'lucide-react';
+import { Pill, Clock, Calendar, CheckCircle2, XCircle, Edit3, Trash2, Eye, Check, History } from 'lucide-react';
 import type { Medicine } from '../types/medicine';
 
 interface MedicineCardProps {
@@ -8,6 +8,8 @@ interface MedicineCardProps {
   onEdit: (medicine: Medicine) => void;
   onDelete: (medicine: Medicine) => void;
   onToggleStatus: (medicine: Medicine) => void;
+  onTakeDose?: (medicine: Medicine) => void;
+  onViewHistory?: (medicine: Medicine) => void;
 }
 
 export const MedicineCard: React.FC<MedicineCardProps> = ({
@@ -16,6 +18,8 @@ export const MedicineCard: React.FC<MedicineCardProps> = ({
   onEdit,
   onDelete,
   onToggleStatus,
+  onTakeDose,
+  onViewHistory,
 }) => {
   return (
     <div className={`med-card ${medicine.status ? 'med-card-active' : 'med-card-inactive'}`}>
@@ -68,6 +72,36 @@ export const MedicineCard: React.FC<MedicineCardProps> = ({
         </div>
       </div>
 
+      {/* Part 5: One-click "Mark as Taken" Dose Action */}
+      {medicine.status && onTakeDose && (
+        <div style={{ padding: '0 1rem 0.75rem' }}>
+          <button
+            type="button"
+            onClick={() => onTakeDose(medicine)}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.45rem',
+              padding: '0.55rem',
+              background: '#ecfdf5',
+              border: '1px solid #a7f3d0',
+              borderRadius: '8px',
+              color: '#047857',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+            title="Record this dose as taken today"
+          >
+            <Check size={16} />
+            <span>Mark as Taken</span>
+          </button>
+        </div>
+      )}
+
       <div className="med-card-actions">
         <button
           type="button"
@@ -78,6 +112,17 @@ export const MedicineCard: React.FC<MedicineCardProps> = ({
           <Eye size={15} />
           <span>Details</span>
         </button>
+        {onViewHistory && (
+          <button
+            type="button"
+            onClick={() => onViewHistory(medicine)}
+            className="btn-action btn-view"
+            title="View Dose History"
+          >
+            <History size={15} />
+            <span>History</span>
+          </button>
+        )}
         <button
           type="button"
           onClick={() => onEdit(medicine)}

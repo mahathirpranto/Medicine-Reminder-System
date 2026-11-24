@@ -37,11 +37,18 @@ else:
         db_path = Path(__file__).resolve().parent / "medicines.db"
     DATABASE_URL = f"sqlite:///{db_path.as_posix()}"
 
-# Engine creation
+# Engine creation with connection pooling optimized for serverless deployments (Supabase/Vercel)
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 else:
-    engine = create_engine(DATABASE_URL)
+    engine = create_engine(
+        DATABASE_URL,
+        pool_pre_ping=True,      # Test connections before giving them to the app
+        pool_size=5,             # Keep up to 5 connections per serverless container
+        max_overflow=10,         # Allow burst of up to 10 extra connections
+        pool_recycle=300,        # Refresh stale connections after 5 minutes
+        pool_timeout=30,         # Max seconds to wait for a connection
+    )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -64,12 +71,29 @@ def init_db():
     except ImportError:
         from . import models
 
+    # Create all tables (users, user_sessions, medicines, dose_logs)
     Base.metadata.create_all(bind=engine)
 
     # Safe migration: ensure user_id column exists on medicines table if upgrading from older schema
     try:
         with engine.connect() as conn:
             conn.execute(text("ALTER TABLE medicines ADD COLUMN user_id INTEGER REFERENCES users(id)"))
+            conn.commit()
+    except Exception:
+        pass  # Column already exists
+
+    # Safe migration: ensure role column exists on users table if upgrading from older schema
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'patient'"))
+            conn.commit()
+    except Exception:
+        pass  # Column already exists
+
+    # Safe migration: ensure is_main_admin column exists on users table
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE users ADD COLUMN is_main_admin BOOLEAN DEFAULT FALSE"))
             conn.commit()
     except Exception:
         pass  # Column already exists
@@ -109,6 +133,47 @@ def init_db():
                 ),
             ]
             db.add_all(sample_medicines)
+            db.commit()
+
+        # Seed or upgrade Main System Administrator account
+        try:
+            from auth import hash_password
+        except ImportError:
+            from .auth import hash_password
+
+        admin_user = db.query(models.User).filter(models.User.email == "admin@example.com").first()
+        if not admin_user:
+            new_admin = models.User(
+                email="admin@example.com",
+                full_name="System Administrator",
+                hashed_password=hash_password("AdminPassword123!"),
+                role="super_admin",
+                is_main_admin=True,
+            )
+            db.add(new_admin)
+            db.commit()
+        else:
+            # Ensure proper Main Admin flags
+            admin_user.is_main_admin = True
+            admin_user.role = "super_admin"
+            admin_user.full_name = "System Administrator"
+            db.commit()
+
+        # Seed Vatista (Secondary Administrator) account
+        vatista_user = db.query(models.User).filter(models.User.email == "vatista@example.com").first()
+        if not vatista_user:
+            new_vatista = models.User(
+                email="vatista@example.com",
+                full_name="Vatista (Admin)",
+                hashed_password=hash_password("VatistaPassword123!"),
+                role="admin",
+                is_main_admin=False,
+            )
+            db.add(new_vatista)
+            db.commit()
+        else:
+            vatista_user.role = "admin"
+            vatista_user.is_main_admin = False
             db.commit()
     except Exception as e:
         db.rollback()

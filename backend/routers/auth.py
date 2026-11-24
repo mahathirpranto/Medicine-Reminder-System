@@ -74,17 +74,28 @@ def signup(payload: UserSignup, db: Session = Depends(get_db)):
     # Hash password with bcrypt
     hashed_pwd = hash_password(payload.password)
 
+    # Determine assigned role (default: patient)
+    role_to_assign = (payload.role or "patient").strip().lower()
+    if role_to_assign not in ("patient", "admin"):
+        role_to_assign = "patient"
+
     new_user = User(
         email=normalized_email,
         full_name=payload.full_name.strip(),
         hashed_password=hashed_pwd,
+        role=role_to_assign,
     )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
     # Generate tokens
-    access_token = create_access_token(new_user.id, new_user.email)
+    access_token = create_access_token(
+        new_user.id,
+        new_user.email,
+        role=new_user.role,
+        is_main_admin=bool(getattr(new_user, "is_main_admin", False)),
+    )
     raw_refresh_token, token_hash, expires_at = generate_refresh_token()
 
     # Store refresh token hash in database session table
@@ -126,7 +137,9 @@ def login(payload: UserLogin, db: Session = Depends(get_db)):
         )
 
     # Generate tokens
-    access_token = create_access_token(user.id, user.email)
+    user_role = getattr(user, "role", "patient") or "patient"
+    is_main = bool(getattr(user, "is_main_admin", False) or user.email == "admin@example.com")
+    access_token = create_access_token(user.id, user.email, role=user_role, is_main_admin=is_main)
     raw_refresh_token, token_hash, expires_at = generate_refresh_token()
 
     # Save session

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel, ConfigDict, Field, EmailStr
 
 
@@ -12,6 +12,7 @@ class UserSignup(BaseModel):
     email: EmailStr = Field(..., description="User's valid email address")
     password: str = Field(..., min_length=6, description="Password (at least 6 characters)")
     full_name: str = Field(..., min_length=1, description="User's display or full name")
+    role: Optional[str] = Field(default="patient", description="User role: patient (default) or admin")
 
 
 class UserLogin(BaseModel):
@@ -25,6 +26,8 @@ class UserResponse(BaseModel):
     id: int
     email: str
     full_name: str
+    role: str = "patient"
+    is_main_admin: bool = False
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -91,3 +94,76 @@ class MedicineResponse(MedicineBase):
     user_id: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ==========================================
+# Dose Tracking Schemas (Part 5)
+# ==========================================
+
+class DoseLogCreate(BaseModel):
+    """Payload to record a taken or skipped medicine dose."""
+    dose_time: Optional[str] = Field(default=None, description="Scheduled time string, e.g. 08:00 AM")
+    status: str = Field(default="taken", description="Dose status: taken, skipped, or missed")
+    notes: Optional[str] = Field(default=None, description="Optional patient notes")
+
+
+class DoseLogResponse(BaseModel):
+    """Returned when a dose record is inspected."""
+    id: int
+    medicine_id: int
+    user_id: int
+    dose_time: str
+    taken_at: datetime
+    status: str
+    notes: Optional[str] = None
+    medicine_name: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TodayScheduleItem(BaseModel):
+    """Scheduled medication item for today with dose completion status."""
+    medicine_id: int
+    medicine_name: str
+    dosage: str
+    frequency: str
+    scheduled_times: List[str]
+    taken_times: List[str]
+    is_fully_taken: bool
+    status: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ==========================================
+# Admin & RBAC Schemas
+# ==========================================
+
+class AdminStatsResponse(BaseModel):
+    """System-wide summary metrics for administrators."""
+    total_users: int
+    total_patients: int
+    total_admins: int
+    total_medicines: int
+    active_medicines: int
+    total_doses_logged: int
+    doses_taken_today: int
+
+
+class AdminUserSummary(BaseModel):
+    """Summary of a user for admin listing."""
+    id: int
+    email: str
+    full_name: str
+    role: str
+    is_main_admin: bool = False
+    created_at: datetime
+    medicines_count: int
+    active_medicines_count: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserRoleUpdate(BaseModel):
+    """Payload to update a user's role."""
+    role: str = Field(..., pattern="^(patient|admin|super_admin)$", description="Role: patient, admin, or super_admin")

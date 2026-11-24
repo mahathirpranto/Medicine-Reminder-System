@@ -51,7 +51,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 # Token Generation & Hashing
 # ==========================================
 
-def create_access_token(user_id: int, email: str) -> str:
+def create_access_token(user_id: int, email: str, role: str = "patient", is_main_admin: bool = False) -> str:
     """
     Generate a stateless 15-minute JWT access token.
     Verified without database query.
@@ -61,6 +61,8 @@ def create_access_token(user_id: int, email: str) -> str:
     payload = {
         "sub": str(user_id),
         "email": email,
+        "role": role,
+        "is_main_admin": is_main_admin,
         "iat": int(now.timestamp()),
         "exp": int(expire.timestamp()),
         "type": "access",
@@ -171,3 +173,43 @@ def get_optional_user(
         return db.query(User).filter(User.id == user_id).first()
     except Exception:
         return None
+
+
+# ==========================================
+# Role-Based Access Control (RBAC) Dependencies
+# ==========================================
+
+def require_role(allowed_roles: list[str]):
+    """
+    Factory for role-based authorization dependencies.
+    Verifies that the authenticated user's role is within allowed_roles.
+    Raises HTTP 403 Forbidden if unauthorized.
+    """
+    def role_checker(current_user: User = Depends(get_current_user)) -> User:
+        user_role = getattr(current_user, "role", "patient") or "patient"
+        if user_role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access forbidden: This action requires one of the following roles: {', '.join(allowed_roles)}. Your current role is '{user_role}'.",
+            )
+        return current_user
+
+    return role_checker
+
+
+def is_main_admin_user(user: User) -> bool:
+    """Check whether a user is the primary System Administrator."""
+    if not user:
+        return False
+    return bool(
+        getattr(user, "is_main_admin", False)
+        or getattr(user, "role", "") == "super_admin"
+        or getattr(user, "email", "").lower() == "admin@example.com"
+    )
+
+
+# Convenient pre-configured role dependencies
+require_admin = require_role(["admin", "super_admin"])
+require_super_admin = require_role(["super_admin"])
+require_patient = require_role(["patient"])
+require_patient_or_admin = require_role(["patient", "admin", "super_admin"])
