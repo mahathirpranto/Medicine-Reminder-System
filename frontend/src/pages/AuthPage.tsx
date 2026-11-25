@@ -16,6 +16,20 @@ export const AuthPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const handleQuickLogin = async (demoEmail: string, demoPassword: string) => {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      await login({ email: demoEmail, password: demoPassword });
+    } catch (err: any) {
+      setError(err.message || 'Login failed. Please check credentials or network.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -207,10 +221,7 @@ export const AuthPage: React.FC = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem', marginBottom: '1.25rem' }}>
               <button
                 type="button"
-                onClick={() => {
-                  setEmail('admin@example.com');
-                  setPassword('AdminPassword123!');
-                }}
+                onClick={() => handleQuickLogin('admin@example.com', 'AdminPassword123!')}
                 title="Fill credentials for Main System Administrator"
                 style={{
                   padding: '0.45rem 0.25rem',
@@ -228,10 +239,7 @@ export const AuthPage: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setEmail('vatista@example.com');
-                  setPassword('VatistaPassword123!');
-                }}
+                onClick={() => handleQuickLogin('vatista@example.com', 'VatistaPassword123!')}
                 title="Fill credentials for Vatista (Secondary Administrator)"
                 style={{
                   padding: '0.45rem 0.25rem',
@@ -249,10 +257,7 @@ export const AuthPage: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setEmail('test_patient_rbac@example.com');
-                  setPassword('PatientPassword123!');
-                }}
+                onClick={() => handleQuickLogin('test_patient_rbac@example.com', 'PatientPassword123!')}
                 title="Fill credentials for test Patient account"
                 style={{
                   padding: '0.45rem 0.25rem',

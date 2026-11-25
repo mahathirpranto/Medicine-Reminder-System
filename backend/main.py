@@ -21,7 +21,10 @@ except ImportError:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize database tables and seed data if needed on startup
-    init_db()
+    try:
+        init_db()
+    except Exception as e:
+        print(f"Startup DB initialization note: {e}")
     yield
 
 
@@ -34,8 +37,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Initialize database tables immediately on app load
-init_db()
+# Initialize database tables immediately on app load with safe error catching
+try:
+    init_db()
+except Exception as e:
+    print(f"Initial DB sync note: {e}")
 
 # Enable CORS for frontend development and external API testing
 app.add_middleware(

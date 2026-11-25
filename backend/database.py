@@ -20,7 +20,17 @@ def _normalize_database_url(url: str) -> str:
     if url.startswith(("postgresql://", "postgresql+psycopg://", "postgresql+psycopg2://")):
         parts = urlsplit(url)
         query = [(k, v) for k, v in parse_qsl(parts.query) if k not in _UNSUPPORTED_QUERY_KEYS]
-        return urlunsplit(parts._replace(query=urlencode(query)))
+        normalized = urlunsplit(parts._replace(query=urlencode(query)))
+        if normalized.startswith("postgresql://"):
+            try:
+                import psycopg  # noqa: F401
+            except ImportError:
+                try:
+                    import psycopg2  # noqa: F401
+                    normalized = normalized.replace("postgresql://", "postgresql+psycopg2://", 1)
+                except ImportError:
+                    pass
+        return normalized
     return url
 
 
