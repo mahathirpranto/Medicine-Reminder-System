@@ -34,18 +34,13 @@ def _normalize_database_url(url: str) -> str:
     return url
 
 
-# Resolve DATABASE_URL from environment or fall back to SQLite
-raw_db_url = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL")
+# Default Supabase PostgreSQL connection pooler (Tokyo ap-northeast-1)
+DEFAULT_SUPABASE_URL = "postgresql://postgres.wmmjnxsldokazavzfntw:pranto2130537@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres?sslmode=require"
 
-if raw_db_url:
-    DATABASE_URL = _normalize_database_url(raw_db_url)
-else:
-    # On Vercel, the filesystem is read-only except /tmp
-    if os.getenv("VERCEL"):
-        db_path = Path("/tmp") / "medicines.db"
-    else:
-        db_path = Path(__file__).resolve().parent / "medicines.db"
-    DATABASE_URL = f"sqlite:///{db_path.as_posix()}"
+# Resolve DATABASE_URL: environment variable takes precedence, otherwise fallback to Supabase
+raw_db_url = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL") or DEFAULT_SUPABASE_URL
+
+DATABASE_URL = _normalize_database_url(raw_db_url)
 
 from sqlalchemy.pool import NullPool
 
@@ -193,6 +188,23 @@ def init_db():
         else:
             vatista_user.role = "admin"
             vatista_user.is_main_admin = False
+            db.commit()
+
+        # Seed Demo Patient account
+        patient_user = db.query(models.User).filter(models.User.email == "patient@example.com").first()
+        if not patient_user:
+            new_patient = models.User(
+                email="patient@example.com",
+                full_name="Demo Patient",
+                hashed_password=hash_password("PatientPassword123!"),
+                role="patient",
+                is_main_admin=False,
+            )
+            db.add(new_patient)
+            db.commit()
+        else:
+            patient_user.role = "patient"
+            patient_user.is_main_admin = False
             db.commit()
     except Exception as e:
         db.rollback()

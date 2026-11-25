@@ -257,8 +257,8 @@ export const AuthPage: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => handleQuickLogin('test_patient_rbac@example.com', 'PatientPassword123!')}
-                title="Fill credentials for test Patient account"
+                onClick={() => handleQuickLogin('patient@example.com', 'PatientPassword123!')}
+                title="Fill credentials for Patient account"
                 style={{
                   padding: '0.45rem 0.25rem',
                   fontSize: '0.725rem',
