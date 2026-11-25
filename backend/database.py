@@ -47,14 +47,23 @@ else:
         db_path = Path(__file__).resolve().parent / "medicines.db"
     DATABASE_URL = f"sqlite:///{db_path.as_posix()}"
 
-# Engine creation with connection pooling optimized for serverless deployments (Supabase/Vercel)
+from sqlalchemy.pool import NullPool
+
+# Engine creation: In serverless environments (Vercel/Lambda), NullPool prevents frozen socket timeouts
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+elif os.getenv("VERCEL"):
+    engine = create_engine(
+        DATABASE_URL,
+        poolclass=NullPool,
+        pool_pre_ping=True,
+        connect_args={"connect_timeout": 10},
+    )
 else:
     engine = create_engine(
         DATABASE_URL,
         pool_pre_ping=True,      # Test connections before giving them to the app
-        pool_size=5,             # Keep up to 5 connections per serverless container
+        pool_size=5,             # Keep up to 5 connections per local server
         max_overflow=10,         # Allow burst of up to 10 extra connections
         pool_recycle=300,        # Refresh stale connections after 5 minutes
         pool_timeout=30,         # Max seconds to wait for a connection
