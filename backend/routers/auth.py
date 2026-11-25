@@ -126,38 +126,47 @@ def login(payload: UserLogin, db: Session = Depends(get_db)):
     Verifies user credentials. On success, issues a short-lived access token
     and creates a new session in user_sessions with a hashed refresh token.
     """
-    normalized_email = payload.email.lower().strip()
-    user = db.query(User).filter(User.email == normalized_email).first()
+    try:
+        normalized_email = payload.email.lower().strip()
+        user = db.query(User).filter(User.email == normalized_email).first()
 
-    if not user or not verify_password(payload.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-            headers={"WWW-Authenticate": "Bearer"},
+        if not user or not verify_password(payload.password, user.hashed_password):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        # Generate tokens
+        user_role = getattr(user, "role", "patient") or "patient"
+        is_main = bool(getattr(user, "is_main_admin", False) or user.email == "admin@example.com")
+        access_token = create_access_token(user.id, user.email, role=user_role, is_main_admin=is_main)
+        raw_refresh_token, token_hash, expires_at = generate_refresh_token()
+
+        # Save session
+        user_session = UserSession(
+            user_id=user.id,
+            token_hash=token_hash,
+            expires_at=expires_at,
+            is_revoked=False,
         )
+        db.add(user_session)
+        db.commit()
 
-    # Generate tokens
-    user_role = getattr(user, "role", "patient") or "patient"
-    is_main = bool(getattr(user, "is_main_admin", False) or user.email == "admin@example.com")
-    access_token = create_access_token(user.id, user.email, role=user_role, is_main_admin=is_main)
-    raw_refresh_token, token_hash, expires_at = generate_refresh_token()
-
-    # Save session
-    user_session = UserSession(
-        user_id=user.id,
-        token_hash=token_hash,
-        expires_at=expires_at,
-        is_revoked=False,
-    )
-    db.add(user_session)
-    db.commit()
-
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=raw_refresh_token,
-        token_type="bearer",
-        user=UserResponse.model_validate(user),
-    )
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=raw_refresh_token,
+            token_type="bearer",
+            user=UserResponse.model_validate(user),
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Login Handler Error: {str(e)} | {traceback.format_exc()}"
+        )
 
 
 @auth_router.post(

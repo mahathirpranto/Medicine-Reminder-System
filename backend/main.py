@@ -38,6 +38,7 @@ app = FastAPI(
     docs_url="/api/docs",
     openapi_url="/api/openapi.json",
     lifespan=lifespan,
+    debug=True,
 )
 
 # Initialize database tables immediately on app load with safe error catching
@@ -89,6 +90,7 @@ def health_check():
     }
 
 
+@app.get("/debug-check", tags=["Health"])
 @app.get("/api/debug-check", tags=["Health"])
 def debug_check():
     results = {}
