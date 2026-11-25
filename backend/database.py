@@ -38,7 +38,11 @@ def _normalize_database_url(url: str) -> str:
 DEFAULT_SUPABASE_URL = "postgresql://postgres.gieeovsmjagdalzblnos:pranto571971@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres?sslmode=require"
 
 # Resolve DATABASE_URL: environment variable takes precedence, otherwise fallback to Supabase
-raw_db_url = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL") or DEFAULT_SUPABASE_URL
+raw_db_url = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL")
+
+# If DATABASE_URL is missing or still points to the old/deleted Tokyo tenant (wmmjnxsldokazavzfntw), use the active Sydney database
+if not raw_db_url or "wmmjnxsldokazavzfntw" in raw_db_url:
+    raw_db_url = DEFAULT_SUPABASE_URL
 
 DATABASE_URL = _normalize_database_url(raw_db_url)
 
