@@ -34,8 +34,8 @@ def _normalize_database_url(url: str) -> str:
     return url
 
 
-# Default Supabase PostgreSQL connection pooler (Tokyo ap-northeast-1)
-DEFAULT_SUPABASE_URL = "postgresql://postgres.wmmjnxsldokazavzfntw:pranto2130537@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres?sslmode=require"
+# Default Supabase PostgreSQL connection pooler (Sydney ap-southeast-2)
+DEFAULT_SUPABASE_URL = "postgresql://postgres.gieeovsmjagdalzblnos:pranto571971@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres?sslmode=require"
 
 # Resolve DATABASE_URL: environment variable takes precedence, otherwise fallback to Supabase
 raw_db_url = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL") or DEFAULT_SUPABASE_URL
