@@ -95,7 +95,7 @@ Since the mid assessment (which featured only basic unauthenticated CRUD operati
 | **GitHub Repository** | [https://github.com/mahathirpranto/Medicine-Reminder-System](https://github.com/mahathirpranto/Medicine-Reminder-System) | Version-controlled source code repository with commits & PRs |
 | **Interactive API Documentation** | [https://2130537-s6.vercel.app/api/docs](https://2130537-s6.vercel.app/api/docs) | Live interactive Swagger UI for all REST API endpoints |
 | **OpenAPI Specification Schema** | [https://2130537-s6.vercel.app/api/openapi.json](https://2130537-s6.vercel.app/api/openapi.json) | Machine-readable JSON contract of the backend service |
-| **Video Demonstration** | [https://youtu.be/placeholder-demo-video](https://youtu.be/placeholder-demo-video) | 5–8 minute end-to-end demonstration on the live Vercel URL |
+| **Video Demonstration** |"https://youtu.be/VHeKf-baV6Y"| 5–8 minute end-to-end demonstration on the live Vercel URL |
 
 *(Note: Test credentials are omitted from this file per security guidelines and are detailed exclusively in the PDF submission Appendix).*
 
